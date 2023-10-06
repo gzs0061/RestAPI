@@ -10,25 +10,58 @@
 
 <body>
     <h1>Engine Database</h1>
-    <button onclick="fetchEngineData()">Fetch Engine Data</button>
-    <div id="engineData"></div>
+    <div>
+        <h2>Current Engine Data</h2>
+        <pre id="currentData"></pre>
+    </div>
+
+    <form id="updateForm">
+        <label for="manufactureDate">New Manufacture Date:</label>
+        <input type="date" id="manufactureDate" name="manufactureDate">
+        <button type="button" onclick="updateManufactureDate()">Update Date</button>
+    </form>
 
     <script>
-        function fetchEngineData() {
-            // Make a GET request to your Node.js server
+        // get current data
+        function fetchCurrentData() {
             fetch('http://localhost:3000/engines')
                 .then(response => response.json())
                 .then(data => {
-                    // Display the data on the page
-                    document.getElementById('engineData').innerHTML = JSON.stringify(data, null, 2);
+                    document.getElementById('currentData').textContent = JSON.stringify(data, null, 2);
                 })
                 .catch(error => {
                     console.error('Error:', error);
                 });
         }
 
-    </script>
+        // update manufacture date
+        function updateManufactureDate() {
+            const newManufactureDate = document.getElementById('manufactureDate').value;
 
+            // PUT request 
+            fetch('http://localhost:3000/engines/1', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        manufactureDate: newManufactureDate
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // display update
+                    document.getElementById('currentData').textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // get current data when the page loads
+        window.onload = fetchCurrentData;
+
+    </script>
 
 </body>
 
