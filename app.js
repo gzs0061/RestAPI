@@ -33,23 +33,24 @@ app.get('/engines', (req, res) => {
 });
 
 //PUT for date updated by id
-app.put('/engines/:id', (req,res) => {
-    const id = req.params.id;
+app.put('/engines/:id', (req, res) => {
+    const newEngineId = req.params.id;
     const updatedManufactureDate = req.body.manufactureDate;
     
-    db.run('UPDATE engines SET manufactureDate = ? WHERE id = ?', [updatedManufactureDate, id], (err) => {
-          if (err) {
-              return res.status(500).json({error: err.message});
-          }
-        
-        //check rows after update
-        if(this.changes === 0) {
-            return res.status(404).json({message: 'Not found'});
+    db.run('UPDATE engines SET manufactureDate = ? WHERE id = ?', [updatedManufactureDate, newEngineId], (err) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
         }
-        
-        res.json({message: "Update successful"});
+
+        // Check rows after update
+        if (this.changes === 0) {
+            return res.status(404).json({ message: 'Not found' });
+        }
+
+        res.json({ message: "Update successful" });
     });
 });
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

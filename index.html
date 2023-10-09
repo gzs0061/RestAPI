@@ -6,20 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title> Engines </title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <h1>Engine Database</h1>
     <div>
         <h2>Current Engine Data</h2>
-        <pre id="currentData"></pre>
+        <div id="currentData"></div>
     </div>
 
     <form id="updateForm">
-        <label for="manufactureDate">New Manufacture Date:</label>
-        <input type="date" id="manufactureDate" name="manufactureDate">
-        <button type="button" onclick="updateManufactureDate()">Update Date</button>
+        <div>
+            <label for="engineId">Engine ID:</label><br>
+            <input type="number" name="engineId" id="engineId">
+            <label for="manufactureDate">New Manufacture Date:</label>
+            <input type="date" id="manufactureDate" name="manufactureDate">
+            <button type="button" onclick="updateManufactureDate()">Update Date</button>
+        </div>
     </form>
+
 
     <script>
         // get current data
@@ -27,7 +33,32 @@
             fetch('http://localhost:3000/engines')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('currentData').textContent = JSON.stringify(data, null, 2);
+                    const tableContainer = document.getElementById('currentData');
+                    const table = document.createElement('table');
+                    table.className = 'data-table';
+                    //header rows
+                    const headerRow = table.insertRow();
+                    for (const key in data[0]) {
+                        if (data[0].hasOwnProperty(key)) {
+                            const headerCell = document.createElement('th');
+                            headerCell.textContent = key;
+                            headerRow.appendChild(headerCell);
+                        }
+                    }
+                    //rows & cells
+                    data.forEach(item => {
+                        const row = table.insertRow();
+                        for (const key in item) {
+                            if (item.hasOwnProperty(key)) {
+                                const cell = row.insertCell();
+                                cell.textContent = item[key];
+                            }
+                        }
+                    });
+                    //creating the table
+                    tableContainer.innerHTML = '';
+                    tableContainer.appendChild(table);
+
                 })
                 .catch(error => {
                     console.error('Error:', error);
@@ -36,27 +67,74 @@
 
         // update manufacture date
         function updateManufactureDate() {
+            const engineId = document.getElementById('engineId').value;
             const newManufactureDate = document.getElementById('manufactureDate').value;
 
+            //validate manufacture date and id
+            if (!isValidEngineId(engineId) || !isValidDate(newManufactureDate)) {
+                alert('Please enter a valid ID and date');
+                return;
+            }
+
+            //make sure it knows what is what
+            const requestData = {
+                id: engineId,
+                manufactureDate: newManufactureDate
+            };
+
             // PUT request 
-            fetch('http://localhost:3000/engines/1', {
+            fetch(`http://localhost:3000/engines/${engineId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        manufactureDate: newManufactureDate
-                    })
+                    body: JSON.stringify(requestData)
                 })
                 .then(response => response.json())
                 .then(data => {
                     // display update
-                    document.getElementById('currentData').textContent = JSON.stringify(data, null, 2);
+                    console.log('update successful', data);
+                    fetchCurrentData();
                 })
                 .catch(error => {
                     console.error('Error:', error);
                 });
         }
+
+        //validate engine
+        function isValidEngineId(engineId) {
+            const id = parseInt(engineId, 10);
+            return !isNaN(id) && id >= 1 && id <= 3;
+        }
+
+        //validate date
+        function isValidDate(dateString) {
+            // First check for the pattern (YYYY-MM-DD)
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString))
+                return false;
+
+            // Parse the date parts to integers
+            var parts = dateString.split("-");
+            var year = parseInt(parts[0], 10);
+            var month = parseInt(parts[1], 10);
+            var day = parseInt(parts[2], 10);
+
+            // Check the ranges of month, day, and year
+            if (year < 2002 || year > 3000 || month < 1 || month > 12 || day < 1 || day > 31)
+                return false;
+
+            var monthLength = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+            // Adjust for leap years
+            if ((year % 400 == 0) || (year % 100 != 0 && year % 4 == 0))
+                monthLength[1] = 29;
+
+            // Check the range of the day
+            return day <= monthLength[month - 1];
+        }
+
+
+
 
         // get current data when the page loads
         window.onload = fetchCurrentData;
